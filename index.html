@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClassFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ========== TOKENS ========== */
+:root{--bg:#f6f6f3;--card:#fff;--bd:#e5e5df;--tx:#17171a;--mu:#6f6f78;--sh:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.04);color-scheme:light}
+:root[data-t=dark]{--bg:#131315;--card:#1b1b1e;--bd:#2c2c31;--tx:#f3f3f5;--mu:#9d9da6;--sh:none;color-scheme:dark}
+/* ========== BASE ========== */
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:2px solid #6366f1;outline-offset:2px}
+.mu{color:var(--mu)}.num{font-variant-numeric:tabular-nums}
+main{max-width:1100px;margin:auto;padding:24px 20px 60px}
+/* ========== HEADER ========== */
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd)}
+.hin{max-width:1100px;margin:auto;padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:.02em;font-size:18px}
+nav{display:flex;gap:4px}
+nav a{padding:6px 13px;border-radius:9px;color:var(--mu);text-decoration:none;font-weight:600;font-size:14px}
+nav a[aria-current=page]{background:var(--card);color:var(--tx);box-shadow:0 0 0 1px var(--bd)}
+.stat{margin-left:auto;text-align:right;line-height:1.25}
+.stat b{display:block;font-size:13px}.stat span{font-size:12px;color:var(--mu)}
+#clock{font-size:12px}
+@media(max-width:640px){nav{order:3;width:100%}nav a{flex:1;text-align:center}}
+/* ========== TODAY ========== */
+.dayhead h1{font-size:clamp(30px,6vw,44px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.dayhead p{color:var(--mu);margin-top:4px}
+.hero{margin:22px 0 32px;background:var(--card);border:1px solid var(--bd);border-left:5px solid var(--c);border-radius:20px;padding:clamp(20px,4vw,36px);box-shadow:var(--sh)}
+.lbl{font-size:13px;font-weight:700;color:var(--mu);display:flex;align-items:center;gap:8px}
+.hero h2{font-size:clamp(38px,8vw,64px);font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:8px 0 2px}
+.hero .cdl{margin-top:22px;font-size:13px;color:var(--mu);font-weight:600}
+.big{font-size:clamp(40px,11vw,76px);font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.bar{height:8px;background:var(--bd);border-radius:9px;margin-top:20px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--c);border-radius:9px;transition:width 1s linear}
+.dot{width:9px;height:9px;border-radius:50%;background:#ef4444;animation:p 1.6s infinite}
+@keyframes p{50%{opacity:.25}}
+@media(prefers-reduced-motion:reduce){.dot{animation:none}.bar i{transition:none}}
+.sec{font-size:13px;font-weight:700;color:var(--mu);margin-bottom:10px}
+.list{display:grid;gap:10px}
+.cl{display:flex;gap:16px;align-items:center;padding:14px 18px;background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--c);border-radius:14px}
+.cl .t{width:76px;font-weight:600;color:var(--mu);font-size:14px}
+.cl .n{flex:1;min-width:0}.cl .n b{font-size:18px}
+.cl.past{opacity:.5}
+.cl.live{box-shadow:0 0 0 2px var(--c),var(--sh)}
+.badge{font-size:11px;font-weight:800;padding:4px 9px;border-radius:99px;border:1px solid var(--bd);white-space:nowrap}
+.live .badge{background:var(--c);border-color:var(--c);color:#fff}
+.empty{padding:28px;border:1px dashed var(--bd);border-radius:14px;color:var(--mu);text-align:center}
+@media(max-width:520px){.cl{flex-wrap:wrap;gap:6px 12px}.cl .t{width:auto}}
+/* ========== SCHEDULE ========== */
+.tt{overflow-x:auto;background:var(--card);border:1px solid var(--bd);border-radius:16px;box-shadow:var(--sh)}
+.ttin{min-width:760px;padding:0 12px 12px}
+.g{display:grid;grid-template-columns:48px repeat(7,1fr);gap:0}
+.gh{padding:12px 0;text-align:center;font-size:12px;font-weight:700;color:var(--mu)}
+.gh.today{color:var(--tx)}.gh.today::after{content:" · today";font-weight:500}
+.gut{position:relative}.gut span{position:absolute;right:8px;transform:translateY(-50%);font-size:11px;color:var(--mu)}
+.col{position:relative;border-left:1px solid var(--bd);background-image:linear-gradient(var(--bd) 1px,transparent 1px);background-size:100% var(--H)}
+.col.today{background-color:color-mix(in srgb,var(--tx) 3%,transparent)}
+.blk{position:absolute;left:3px;right:3px;padding:6px 8px;border-radius:9px;background:color-mix(in srgb,var(--c) 16%,var(--card));border-left:4px solid var(--c);font-size:12px;overflow:hidden;line-height:1.3}
+.blk b{display:block;font-size:14px}
+.blk.live{box-shadow:0 0 0 2px var(--c)}
+.now{position:absolute;left:0;right:0;height:0;border-top:2px solid #ef4444;z-index:5}
+.now::before{content:"NOW";position:absolute;left:0;top:-9px;font-size:9px;font-weight:800;background:#ef4444;color:#fff;padding:1px 4px;border-radius:4px}
+/* ========== SETTINGS ========== */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:800px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;box-shadow:var(--sh)}
+.panel h3{font-size:16px;margin-bottom:14px}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--mu)}
+input,select{font:inherit;padding:8px 10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);min-width:0}
+input[type=color]{padding:2px;height:38px;width:52px}
+button{font:inherit;font-weight:700;font-size:13px;padding:8px 14px;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+button.pri{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+button.dng{color:#dc2626}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--bd)}
+.row:first-of-type{border-top:0}
+.row .sp{flex:1;min-width:120px}
+.sw{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.err{color:#dc2626;font-size:13px;margin-top:8px;min-height:1em}
+.stack{display:grid;gap:18px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="hin">
+  <div class="brand">ClassFlow</div>
+  <nav aria-label="Main">
+    <a href="#today" data-v="today">Today</a>
+    <a href="#schedule" data-v="schedule">Schedule</a>
+    <a href="#settings" data-v="settings">Settings</a>
+  </nav>
+  <div class="stat" aria-live="off"><b id="hs">—</b><span class="num"><span id="hcd2"></span> <span id="clock"></span></span></div>
+</div></header>
+<main id="app"></main>
+
+<script>
+"use strict";
+// =========================
+// CONFIGURATION / DATA
+// =========================
+const KEY = "classflow.v1";
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const SHORT = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+const PALETTE = ["#8b5cf6","#ec4899","#eab308","#3b82f6","#84cc16"];
+const H = 56; // px per hour in weekly grid
+const defaultData = () => {
+  const s = [[1,"MS3610",11,12],[1,"CE5810",12,13],[1,"GN6120",14,17],[2,"MS3610",10,11],[2,"GN5008",14,17],
+             [3,"MS3610",8,9],[3,"CE5810",11,12],[4,"CE5810",10,11],[5,"ID4101",11,13]];
+  return {
+    theme:"system", h24:false,
+    courses:{MS3610:{name:"",color:"#22c55e"},CE5810:{name:"",color:"#06b6d4"},GN6120:{name:"",color:"#ef4444"},
+             GN5008:{name:"",color:"#14b8a6"},ID4101:{name:"",color:"#b7791f"}},
+    schedule:s.map(([day,code,a,b],i)=>({id:"d"+i,day,code,start:a*60,end:b*60}))
+  };
+};
+
+// =========================
+// STATE
+// =========================
+let S = loadData();
+let view = "today", editId = null, lastSig = "", formErr = "";
+
+// =========================
+// LOCAL STORAGE
+// =========================
+function validData(d){
+  const okT = x => Number.isInteger(x) && x >= 0 && x <= 1440;
+  return d && typeof d==="object" && ["system","light","dark"].includes(d.theme) && typeof d.h24==="boolean"
+    && d.courses && typeof d.courses==="object" && !Array.isArray(d.courses)
+    && Object.values(d.courses).every(c=>c && typeof c.name==="string" && /^#[0-9a-f]{6}$/i.test(c.color))
+    && Array.isArray(d.schedule)
+    && d.schedule.every(c=>c && typeof c.id==="string" && Number.isInteger(c.day) && c.day>=0 && c.day<=6
+      && typeof c.code==="string" && okT(c.start) && okT(c.end) && c.start<c.end);
+}
+function loadData(){
+  try{ const d = JSON.parse(localStorage.getItem(KEY)); if(validData(d)) return d; }catch(e){}
+  return defaultData();
+}
+function saveData(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function resetData(){ S = defaultData(); editId = null; saveData(); applyTheme(); }
+
+// =========================
+// DATE / TIME UTILITIES
+// =========================
+const $ = (s,r=document)=>r.querySelector(s);
+const pad = n => String(n).padStart(2,"0");
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const getCurrentDate = () => new Date();
+const getDayOfWeek = d => (d.getDay()+6)%7; // Mon=0 … Sun=6
+const nowInfo = () => { const d=getCurrentDate(); return {d, day:getDayOfWeek(d), sec:d.getHours()*3600+d.getMinutes()*60+d.getSeconds()}; };
+const fmtTime = m => { const h=Math.floor(m/60)%24, mm=m%60;
+  return S.h24 ? `${pad(h)}:${pad(mm)}` : `${h%12||12}:${pad(mm)} ${h<12?"AM":"PM"}`; };
+const fmtRange = c => `${fmtTime(c.start)} – ${fmtTime(c.end)}`;
+const fmtCD = t => { t=Math.max(0,Math.floor(t)); const d=Math.floor(t/86400);
+  return (d?d+"d ":"")+`${pad(Math.floor(t%86400/3600))}:${pad(Math.floor(t%3600/60))}:${pad(t%60)}`; };
+const toMin = v => { const [h,m]=v.split(":").map(Number); return h*60+m; };
+const toInput = m => `${pad(Math.floor(m/60))}:${pad(m%60)}`;
+const color = code => (S.courses[code]||{}).color || "#888";
+
+// =========================
+// SCHEDULE ENGINE
+// =========================
+const getTodayClasses = day => S.schedule.filter(c=>c.day===day).sort((a,b)=>a.start-b.start);
+// start <= now < end : exact start = current, exact end = finished
+const getCurrentClass = n => getTodayClasses(n.day).find(c=>n.sec>=c.start*60 && n.sec<c.end*60) || null;
+// Next class start strictly after now (wraps across the week). Returns {c, d(seconds)}
+function getNextClass(n){
+  const w = n.day*86400+n.sec; let best=null;
+  for(const c of S.schedule){
+    let d = c.day*86400+c.start*60-w; if(d<=0) d+=604800;
+    if(!best || d<best.d) best={c,d};
+  }
+  return best;
+}
+// Next class that is not on today's calendar day (for "done"/"no class" states)
+function getNextClassAfterToday(n){
+  let best=null;
+  for(const c of S.schedule){
+    let o=(c.day-n.day+7)%7; if(o===0) o=7;
+    const d=o*86400+c.start*60-n.sec; if(!best||d<best.d) best={c,d};
+  }
+  return best;
+}
+const getTimeUntilClass = (nx) => nx.d;
+const getTimeUntilClassEnds = (c,n) => c.end*60-n.sec;
+const getClassProgress = (c,n) => Math.min(1,Math.max(0,(n.sec-c.start*60)/((c.end-c.start)*60)));
+const classStatus = (c,n) => n.sec>=c.end*60 ? "past" : n.sec>=c.start*60 ? "live" : "up";
+const dayLabel = (nx,n) => nx.c.day===n.day && nx.d<86400 ? "Today" : DAYS[nx.c.day];
+
+// =========================
+// RENDERING
+// =========================
+const courseTitle = code => { const nm=(S.courses[code]||{}).name; return nm?`<span class="mu"> · ${esc(nm)}</span>`:""; };
+
+function heroHTML(n){
+  const cur=getCurrentClass(n), tc=getTodayClasses(n.day), nx=getNextClass(n);
+  if(!nx) return `<section class="hero" style="--c:#888"><h2>No classes</h2><p class="mu">Add a class in Settings.</p></section>`;
+  if(cur) return `<section class="hero" style="--c:${color(cur.code)}" aria-label="Current class">
+    <div class="lbl"><span class="dot"></span>CURRENTLY IN CLASS · LIVE NOW</div>
+    <h2>${esc(cur.code)}</h2><p class="mu num">${fmtRange(cur)}${courseTitle(cur.code)}</p>
+    <div class="cdl">Ends in</div><div class="big num" id="hcd" data-mode="end"></div>
+    <div class="bar" role="progressbar" aria-label="Class progress" aria-valuemin="0" aria-valuemax="100"><i id="hbar"></i></div></section>`;
+  if(tc.some(c=>c.start*60>n.sec)) return `<section class="hero" style="--c:${color(nx.c.code)}" aria-label="Next class">
+    <div class="lbl">NEXT CLASS</div><h2>${esc(nx.c.code)}</h2>
+    <p class="mu num">${fmtRange(nx.c)}${courseTitle(nx.c.code)}</p>
+    <div class="cdl">Starts in</div><div class="big num" id="hcd" data-mode="start"></div></section>`;
+  const nd=getNextClassAfterToday(n), head=tc.length?"YOU'RE DONE FOR TODAY":"NO CLASSES TODAY";
+  return `<section class="hero" style="--c:${color(nd.c.code)}" aria-label="Next class">
+    <div class="lbl">${head}</div>
+    <h2 style="font-size:clamp(28px,6vw,44px)">${tc.length?"No more classes today.":"You have no classes today."}</h2>
+    <div class="cdl">Next class</div>
+    <p style="font-size:22px;font-weight:700" class="num">${DAYS[nd.c.day]} · ${fmtTime(nd.c.start)}</p>
+    <p style="font-size:22px;font-weight:700;color:${color(nd.c.code)}">${esc(nd.c.code)}</p></section>`;
+}
+function renderToday(n){
+  const tc=getTodayClasses(n.day);
+  $("#app").innerHTML = `<div class="dayhead"><h1>${DAYS[n.day]}</h1>
+    <p>${n.d.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})} · ${tc.length} ${tc.length===1?"class":"classes"} today</p></div>
+    ${heroHTML(n)}
+    <h2 class="sec">Today's classes</h2>
+    <div class="list">${tc.length?tc.map(c=>{const st=classStatus(c,n);
+      return `<article class="cl ${st}" style="--c:${color(c.code)}"><div class="t num">${fmtTime(c.start)}</div>
+      <div class="n"><b>${esc(c.code)}</b>${courseTitle(c.code)}<div class="mu num" style="font-size:13px">${fmtRange(c)}</div></div>
+      <span class="badge">${st==="past"?"COMPLETED":st==="live"?"LIVE NOW":"UPCOMING"}</span></article>`}).join("")
+      :`<div class="empty">Nothing scheduled today. Enjoy the free day.</div>`}</div>`;
+}
+function gridRange(){
+  const a=S.schedule.map(c=>c.start), b=S.schedule.map(c=>c.end);
+  return {lo:Math.min(8,Math.floor(Math.min(...a,480)/60)), hi:Math.max(17,Math.ceil(Math.max(...b,1020)/60))};
+}
+function renderSchedule(n){
+  const {lo,hi}=gridRange(), hrs=hi-lo, cur=getCurrentClass(n);
+  const gut=Array.from({length:hrs+1},(_,i)=>`<span style="top:${i*H}px">${fmtTime((lo+i)*60).replace(":00","")}</span>`).join("");
+  const cols=DAYS.map((_,d)=>`<div class="col ${d===n.day?"today":""}" style="height:${hrs*H}px">
+    ${getTodayClasses(d).map(c=>`<div class="blk ${cur&&cur.id===c.id?"live":""}" style="--c:${color(c.code)};top:${(c.start/60-lo)*H+1}px;height:${(c.end-c.start)/60*H-2}px">
+      <b>${esc(c.code)}</b><span class="num">${fmtTime(c.start)} – ${fmtTime(c.end)}</span>${cur&&cur.id===c.id?"<br><b>LIVE NOW</b>":""}</div>`).join("")}
+    ${d===n.day?`<div class="now" id="now" role="presentation"></div>`:""}</div>`).join("");
+  $("#app").innerHTML=`<div class="dayhead"><h1>Schedule</h1><p>Your week, repeating every week.</p></div>
+    <div class="tt" style="margin-top:20px;--H:${H}px"><div class="ttin"><div class="g">
+    <div></div>${SHORT.map((s,i)=>`<div class="gh ${i===n.day?"today":""}">${s}</div>`).join("")}</div>
+    <div class="g"><div class="gut" style="height:${hrs*H}px">${gut}</div>${cols}</div></div></div>`;
+}
+function renderSettings(){
+  const e=S.schedule.find(c=>c.id===editId)||{day:1,code:"",start:540,end:600};
+  const dl=Object.keys(S.courses).map(c=>`<option value="${esc(c)}">`).join("");
+  const rows=[...S.schedule].sort((a,b)=>a.day-b.day||a.start-b.start).map(c=>`<div class="row">
+    <span class="sw" style="--c:${color(c.code)}"></span><span class="sp"><b>${esc(c.code)}</b> <span class="mu num">${SHORT[c.day]} ${fmtRange(c)}</span></span>
+    <button data-act="edit" data-id="${c.id}" aria-label="Edit ${esc(c.code)} on ${DAYS[c.day]}">Edit</button>
+    <button class="dng" data-act="del" data-id="${c.id}" aria-label="Delete ${esc(c.code)} on ${DAYS[c.day]}">Delete</button></div>`).join("")||`<p class="mu">No classes yet.</p>`;
+  const crs=Object.entries(S.courses).map(([code,c])=>`<div class="row"><b style="width:74px">${esc(code)}</b>
+    <label class="sp">Course name<input class="cn" data-code="${esc(code)}" value="${esc(c.name)}" placeholder="Not set"></label>
+    <label>Color<input class="cc" type="color" data-code="${esc(code)}" value="${c.color}"></label></div>`).join("");
+  $("#app").innerHTML=`<div class="dayhead"><h1>Settings</h1></div><div class="grid2" style="margin-top:20px">
+  <div class="stack">
+   <form class="panel" id="cf"><h3>${editId?"Edit class":"Add class"}</h3><div class="f">
+    <label>Day<select id="fd">${DAYS.map((d,i)=>`<option value="${i}" ${i===e.day?"selected":""}>${d}</option>`).join("")}</select></label>
+    <label>Course code<input id="fc" list="cl" value="${esc(e.code)}" required maxlength="12" autocomplete="off"></label>
+    <label>Start time<input id="fs" type="time" value="${toInput(e.start)}" required></label>
+    <label>End time<input id="fe" type="time" value="${toInput(e.end)}" required></label></div><datalist id="cl">${dl}</datalist>
+    <div class="err" role="alert">${esc(formErr)}</div>
+    <div class="row" style="border:0;padding-bottom:0"><button class="pri" type="submit">${editId?"Save changes":"Add class"}</button>
+    ${editId?`<button type="button" data-act="cancel">Cancel</button>`:""}</div></form>
+   <div class="panel"><h3>Preferences</h3><div class="f">
+    <label>Theme<select id="th">${["system","light","dark"].map(t=>`<option ${S.theme===t?"selected":""}>${t}</option>`).join("")}</select></label>
+    <label>Clock<select id="h24"><option value="0" ${S.h24?"":"selected"}>12-hour</option><option value="1" ${S.h24?"selected":""}>24-hour</option></select></label></div>
+    <div class="row" style="margin-top:14px"><button class="dng" data-act="reset">Reset to default schedule</button></div></div>
+  </div>
+  <div class="stack"><div class="panel"><h3>Your classes</h3>${rows}</div><div class="panel"><h3>Courses</h3>${crs}</div></div></div>`;
+}
+function render(){
+  const n=nowInfo();
+  ({today:()=>renderToday(n),schedule:()=>renderSchedule(n),settings:renderSettings})[view]();
+  lastSig=sigOf(n); tick();
+}
+
+// =========================
+// NAVIGATION
+// =========================
+function nav(){
+  const h=location.hash.replace("#","");
+  view=["schedule","settings"].includes(h)?h:"today";
+  document.querySelectorAll("nav a").forEach(a=>a.toggleAttribute("aria-current",a.dataset.v===view)||a.removeAttribute("aria-current"));
+  document.querySelectorAll("nav a").forEach(a=>{ if(a.dataset.v===view) a.setAttribute("aria-current","page"); });
+  render();
+}
+function applyTheme(){
+  const dark=S.theme==="dark"||(S.theme==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.t=dark?"dark":"light";
+}
+
+// =========================
+// LIVE TICK (single interval)
+// =========================
+const sigOf = n => { const c=getCurrentClass(n), x=getNextClass(n);
+  return [n.d.toDateString(),c&&c.id,x&&x.c.id,getTodayClasses(n.day).filter(k=>k.end*60<=n.sec).length,S.h24].join("|"); };
+function tick(){
+  const n=nowInfo();
+  $("#clock").textContent=S.h24?`${pad(n.d.getHours())}:${pad(n.d.getMinutes())}:${pad(n.d.getSeconds())}`
+    :`${n.d.getHours()%12||12}:${pad(n.d.getMinutes())}:${pad(n.d.getSeconds())} ${n.d.getHours()<12?"AM":"PM"}`;
+  if(view!=="settings"&&sigOf(n)!==lastSig) return render();
+  const cur=getCurrentClass(n), nx=getNextClass(n);
+  $("#hs").textContent=cur?`LIVE · ${cur.code}`:nx?`NEXT · ${nx.c.code}`:"No classes";
+  $("#hcd2").textContent=cur?`ENDS IN ${fmtCD(getTimeUntilClassEnds(cur,n))} ·`:nx?`${fmtCD(getTimeUntilClass(nx))} ·`:"";
+  const cd=$("#hcd"); if(cd) cd.textContent=fmtCD(cd.dataset.mode==="end"&&cur?getTimeUntilClassEnds(cur,n):nx.d);
+  const bar=$("#hbar"); if(bar&&cur){const p=Math.round(getClassProgress(cur,n)*100); bar.style.width=p+"%"; bar.parentNode.setAttribute("aria-valuenow",p);}
+  const now=$("#now"); if(now){const {lo,hi}=gridRange(),y=(n.sec/3600-lo)*H; now.hidden=y<0||y>(hi-lo)*H; now.style.top=y+"px";}
+}
+
+// =========================
+// SETTINGS HANDLERS
+// =========================
+function submitClass(ev){
+  ev.preventDefault();
+  const code=$("#fc").value.trim().toUpperCase().replace(/\s+/g,""), start=toMin($("#fs").value), end=toMin($("#fe").value);
+  if(!code) formErr="Enter a course code.";
+  else if(!(start<end)) formErr="End time must be after start time.";
+  else{
+    formErr="";
+    if(!S.courses[code]) S.courses[code]={name:"",color:PALETTE[Object.keys(S.courses).length%PALETTE.length]};
+    const rec={id:editId||"c"+Date.now().toString(36),day:+$("#fd").value,code,start,end};
+    const i=S.schedule.findIndex(c=>c.id===editId);
+    i>=0?S.schedule[i]=rec:S.schedule.push(rec);
+    editId=null; saveData();
+  }
+  renderSettings(); lastSig=sigOf(nowInfo());
+}
+function onClick(ev){
+  const b=ev.target.closest("[data-act]"); if(!b) return;
+  const a=b.dataset.act;
+  if(a==="edit"){editId=b.dataset.id;formErr="";renderSettings();$("#cf").scrollIntoView({behavior:"smooth",block:"center"});}
+  else if(a==="cancel"){editId=null;formErr="";renderSettings();}
+  else if(a==="del"&&confirm("Delete this class?")){S.schedule=S.schedule.filter(c=>c.id!==b.dataset.id);if(editId===b.dataset.id)editId=null;saveData();renderSettings();}
+  else if(a==="reset"&&confirm("Reset everything to the default schedule and settings?")){resetData();renderSettings();}
+}
+function onChange(ev){
+  const t=ev.target;
+  if(t.id==="th"){S.theme=t.value;applyTheme();}
+  else if(t.id==="h24"){S.h24=t.value==="1";}
+  else if(t.classList.contains("cn")){S.courses[t.dataset.code].name=t.value.trim();}
+  else if(t.classList.contains("cc")){S.courses[t.dataset.code].color=t.value;}
+  else return;
+  saveData();
+}
+
+// =========================
+// EVENT LISTENERS
+// =========================
+document.addEventListener("click",onClick);
+document.addEventListener("change",onChange);
+document.addEventListener("submit",ev=>{if(ev.target.id==="cf")submitClass(ev);});
+addEventListener("hashchange",nav);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick();}); // wake / tab return
+addEventListener("focus",tick);
+addEventListener("pageshow",tick);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
+
+// =========================
+// INITIALIZATION
+// =========================
+applyTheme();
+nav();
+setInterval(tick,1000);
+</script>
+</body>
+</html>
